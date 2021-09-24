@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.7.6;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
 /**
@@ -20,7 +18,6 @@ import "@openzeppelin/contracts/utils/Address.sol";
   August 23rd, 2021.
 */
 abstract contract PermitControl is Ownable {
-  using SafeMath for uint256;
   using Address for address;
 
   /// A special reserved constant for representing no rights.
@@ -108,7 +105,7 @@ abstract contract PermitControl is Ownable {
     bytes32 _right
   ) {
     require(_msgSender() == owner()
-      || hasRightUntil(_msgSender(), _circumstance, _right) > block.timestamp,
+      || hasRightUntil(_msgSender(), _circumstance, _right),
       "PermitControl: sender does not have a valid permit");
     _;
   }
@@ -134,8 +131,8 @@ abstract contract PermitControl is Ownable {
     address _address,
     bytes32 _circumstance,
     bytes32 _right
-  ) public view returns (uint256) {
-    return permissions[_address][_circumstance][_right];
+  ) public view returns (bool) {
+    return permissions[_address][_circumstance][_right] > block.timestamp;
   }
 
   /**
@@ -154,7 +151,7 @@ abstract contract PermitControl is Ownable {
     bytes32 _circumstance,
     bytes32 _right,
     uint256 _expirationTime
-  ) external virtual hasValidPermit(UNIVERSAL, managerRight[_right]) {
+  ) public virtual hasValidPermit(UNIVERSAL, managerRight[_right]) {
     require(_right != ZERO_RIGHT,
       "PermitControl: you may not grant the zero right");
     permissions[_address][_circumstance][_right] = _expirationTime;
